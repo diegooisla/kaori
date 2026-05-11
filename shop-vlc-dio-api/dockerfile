@@ -1,0 +1,41 @@
+# ============================================
+# Etapa 1: Build con Maven
+# ============================================
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+
+WORKDIR /app
+
+# Copiar POMs
+COPY pom.xml .
+
+COPY shop-vlc-dio-common/pom.xml shop-vlc-dio-common/
+COPY shop-vlc-dio-security/pom.xml shop-vlc-dio-security/
+COPY shop-vlc-dio-api/pom.xml shop-vlc-dio-api/
+COPY shop-vlc-dio-web/pom.xml shop-vlc-dio-web/
+
+# Descargar dependencias
+RUN mvn dependency:go-offline -B
+
+# Copiar código fuente
+COPY shop-vlc-dio-common/src shop-vlc-dio-common/src
+COPY shop-vlc-dio-security/src shop-vlc-dio-security/src
+COPY shop-vlc-dio-api/src shop-vlc-dio-api/src
+
+# Compilar módulo API y dependencias
+RUN mvn clean package -DskipTests -pl shop-vlc-dio-api -am
+
+# ============================================
+# Etapa 2: Imagen final ligera
+# ============================================
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copiar el JAR generado
+COPY --from=build /app/shop-vlc-dio-api/target/*.jar app.jar
+
+# Puerto de Spring Boot
+EXPOSE 8000
+
+# Arranque
+ENTRYPOINT ["java","-jar", "app.jar"]

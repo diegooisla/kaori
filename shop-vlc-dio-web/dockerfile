@@ -1,0 +1,64 @@
+# ============================================
+# Etapa 1: Build con Maven
+# ============================================
+
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+
+WORKDIR /app
+
+# ==================================================
+# Copiar POMs
+# ==================================================
+
+COPY pom.xml .
+
+COPY shop-vlc-dio-common/pom.xml shop-vlc-dio-common/
+COPY shop-vlc-dio-security/pom.xml shop-vlc-dio-security/
+COPY shop-vlc-dio-api/pom.xml shop-vlc-dio-api/
+COPY shop-vlc-dio-web/pom.xml shop-vlc-dio-web/
+
+# ==================================================
+# Descargar dependencias
+# ==================================================
+
+RUN mvn dependency:go-offline -B
+
+# ==================================================
+# Copiar código fuente necesario
+# ==================================================
+
+COPY shop-vlc-dio-common/src shop-vlc-dio-common/src
+COPY shop-vlc-dio-security/src shop-vlc-dio-security/src
+COPY shop-vlc-dio-web/src shop-vlc-dio-web/src
+
+# ==================================================
+# Compilar módulo WEB
+# ==================================================
+
+RUN mvn clean package -DskipTests -pl shop-vlc-dio-web -am
+
+# ============================================
+# Etapa 2: Imagen final ligera
+# ============================================
+
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# ==================================================
+# Copiar JAR generado
+# ==================================================
+
+COPY --from=build /app/shop-vlc-dio-web/target/*.jar app.jar
+
+# ==================================================
+# Puerto
+# ==================================================
+
+EXPOSE 8080
+
+# ==================================================
+# Arranque
+# ==================================================
+
+ENTRYPOINT ["java","-jar", "app.jar"]
