@@ -1,9 +1,9 @@
 name: Primer workflow
 on:
-  push:
+  push: null
 jobs:
   hola:
-  runs-on: ubuntu-latest
-  steps:
-    - name: Mostrar mensaje
-  run: echo "Hola desde GitHub Actions"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mostrar mensaje
+        run: echo "Hola desde GitHub Actions"
